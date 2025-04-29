@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Document</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <style>
+@import url("https://fonts.googleapis.com/css?family=Source+Sans+Pro");
+body {
+  padding: 0;
+  margin: 0;
+}
+.nowplayingcard {
+  width: 600px;
+  text-align: center;
+  position: absolute;
+  padding: 20px;
+  left: 50%;
+  top: 50%;
+  -webkit-transform: translateX(-50%) translateY(-50%);
+  transform: translateX(-50%) translateY(-50%);
+  font-family: "Source Sans Pro", sans-serif;
+}
+.nowplayingcontainer-inner {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: fit-content;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+  transition: 0.3s;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  -ms-border-radius: 10px;
+  -o-border-radius: 10px;
+  border-radius: 10px;
+}
+.nowplayingcontainer-inner:hover {
+  box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
+}
+
+#recentTracks{
+  width: 600px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+img#trackart {
+  width: 120px;
+  float: left;
+  left: 0;
+  -webkit-border-top-left-radius: 10px;
+  -moz-border-top-left-radius: 10px;
+  -ms-border-top-left-radius: 10px;
+  -o-border-top-left-radius: 10px;
+  border-top-left-radius: 10px;
+  -webkit-border-bottom-left-radius: 10px;
+  -moz-border-bottom-left-radius: 10px;
+  -ms-border-bottom-left-radius: 10px;
+  -o-border-bottom-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+
+.recent-track img#trackart{
+  width: 80px;
+}
+
+.trackInfo {
+  width: 100%;
+  height: 100%;
+  float: left;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.trackInfo a {
+    position: relative;
+    width: auto;
+  padding-left: 5%;
+  padding-right: 5%;
+  display: block;
+  text-align: left;
+  overflow: hidden;
+  text-decoration: none;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.trackInfo p {
+position: relative;
+width: auto;
+margin: 0%;
+  padding-left: 5%;
+  padding-right: 5%;
+  padding-bottom: 3%;
+  display: block;
+  color: gray;
+  font-size: 1rem;
+  text-align: left;
+  letter-spacing: 0.1px;
+}
+
+#tracktitle {
+  color: black;
+  font-weight: bold;
+  vertical-align: middle;
+  line-height: 30px;
+  padding-bottom: 5px;
+  font-size: 1.7rem;
+}
+
+.recent-track #tracktitle{
+  font-size: 1rem;
+}
+#trackartist {
+  color: gray;
+  font-size: 1rem;
+  letter-spacing: 0.1px;
+}
+
+.recent-track #trackartist{
+  font-size: 0.8rem;
+}
+
+.status-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin-left: 6px;
+    border-radius: 50%;
+    background-color: grey;
+    vertical-align: middle;
+  }
+  .status-indicator.red {
+    background-color: red;
+  }
+  .status-indicator.grey {
+    background-color: grey;
+  }
+  .blurry {
+    filter: blur(10px);
+    transition: filter 0.3s ease;
+  }
+    </style>
+</head>
+<body>
+  <script>
+    const lastfmData = {
+      baseURL:
+        "https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=",
+      user: "Myko02",
+      api_key: "6f5dcb6cc485aa650e4b132aaa415f87",
+      additional: "&format=json&limit=5"
+    };
+  
+    function getSetLastFM() {
+      $.ajax({
+        type: "GET",
+        url:
+          lastfmData.baseURL +
+          lastfmData.user +
+          "&api_key=" +
+          lastfmData.api_key +
+          lastfmData.additional,
+        dataType: "json",
+        success: function (resp) {
+          const tracks = resp.recenttracks.track;
+          const isNowPlaying =
+            tracks[0]["@attr"] && tracks[0]["@attr"].nowplaying === "true";
+          const currentTrack = tracks[0];
+
+          
+          // Dynamically update play status text and color
+          if (isNowPlaying) {
+            $("#playStatus").removeClass("grey").addClass("red");
+            $("p#statusText").html('Now Playing: <span id="playStatus" class="status-indicator red"></span>');
+          } else {
+            $("#playStatus").removeClass("red").addClass("grey");
+            $("p#statusText").html('Last Played: <span id="playStatus" class="status-indicator grey"></span>');
+          }
+  
+          // --- Update Now Playing ---
+          $("a#tracktitle")
+            .html(currentTrack.name)
+            .attr("href", currentTrack.url)
+            .attr("title", `${currentTrack.name} by ${currentTrack.artist["#text"]}`)
+            .attr("target", "_blank");
+  
+          $("a#trackartist")
+            .html(currentTrack.artist["#text"])
+            .attr("title", "Artist: " + currentTrack.artist["#text"]);
+  
+          const $mainImage = $("img#trackart");
+          $mainImage.addClass("blurry");
+          $mainImage.attr("src", currentTrack.image[2]["#text"]);
+          $mainImage.on("load", function () {
+            $(this).removeClass("blurry");
+          });
+  
+          // --- Update Recently Played ---
+          let recentHTML = "";
+          let startIndex = isNowPlaying ? 1 : 0;
+  
+          let count = 0;
+          for (let i = startIndex; i < tracks.length && count < 3; i++) {
+            const t = tracks[i];
+            const title = t.name;
+            const artist = t.artist["#text"];
+            const url = t.url;
+            const image =
+              t.image[1]["#text"] || "https://i.imgur.com/Q6cCswP.jpg";
+            
+  
+            recentHTML += `
+              <div class="recent-track nowplayingcontainer-inner" >
+                <img id="trackart" src="${image}" alt="Album Art">
+                <div class="trackInfo">
+                <a id="tracktitle" href="${url}" target="_blank" title="${title}">${title}</a>
+                <a id="trackartist">${artist}</a>
+                </div>
+              </div>
+            `;
+            count++;
+          }
+  
+          // Replace recent tracks DOM content
+          $("#recentTracks").html(recentHTML);
+        },
+        error: function () {
+          $("a#tracktitle").html("Could not load track");
+          $("#recentTracks").html("<p>Error loading recent tracks.</p>");
+        }
+      });
+    }
+  
+    getSetLastFM();
+    setInterval(getSetLastFM, 5000); // Every 5 seconds
+  </script>
+    <div class="nowplayingcard">
+      <div class="nowplayingcontainer-inner">
+        <img id="trackart" src="#">
+        <div class="trackInfo">
+          <p id="statusText">
+            ▶ Now Playing:
+            <span id="playStatus" class="status-indicator grey"></span>
+          </p>
+          <a id="tracktitle"></a>
+          <a href="#" id="trackartist"></a>
+        </div>
+      </div>
+      <div class="recentlyPlayedCard">
+        <h3>Recently Played:</h3>
+        <div id="recentTracks"></div>
+      </div>
+    </div>
+</body>
+</html>
