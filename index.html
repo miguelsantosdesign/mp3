@@ -244,18 +244,27 @@ margin: 0%;
             .html(currentTrack.artist["#text"])
             .attr("title", "Artist: " + currentTrack.artist["#text"]);
   
-          const $mainImage = $("img#trackart");
-          const imageUrl = currentTrack.image[2]["#text"] || defaultImage;
-          $mainImage.addClass("blurry");
-          $mainImage
-            .attr("src", imageUrl)
-            .off("error") // reset any previous error handlers
-            .on("error", function () {
-              $(this).attr("src", "https://i.imgur.com/Q6cCswP.jpg");
-            })
-            .on("load", function () {
-              $(this).removeClass("blurry");
-            });
+            function getLargestImage(imageArray) {
+              const preferredSizes = ["mega", "extralarge", "large", "medium", "small"];
+              for (let size of preferredSizes) {
+                const found = imageArray.find(img => img.size === size && img["#text"]);
+                if (found && found["#text"]) return found["#text"];
+              }
+              return "https://i.imgur.com/Q6cCswP.jpg"; // fallback image
+            }
+
+            const $mainImage = $("img#trackart");
+            const imageUrl = getLargestImage(currentTrack.image);
+            $mainImage.addClass("blurry");
+            $mainImage
+              .attr("src", imageUrl)
+              .off("error") // reset any previous error handlers
+              .on("error", function () {
+                $(this).attr("src", "https://i.imgur.com/Q6cCswP.jpg");
+              })
+              .on("load", function () {
+                $(this).removeClass("blurry");
+              });
   
           // --- Update Recently Played ---
           const recentOnly = isNowPlaying ? tracks.slice(1) : tracks;
