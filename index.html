@@ -24,10 +24,11 @@ body {
   font-family: "Source Sans Pro", sans-serif;
 }
 .nowplayingcontainer-inner {
+  position: relative;
+  overflow: hidden;
   display: flex;
   align-items: center;
-  width: 100%;
-  min-width: fit-content;
+  width: 600px;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
   transition: 0.3s;
   -webkit-border-radius: 10px;
@@ -51,6 +52,7 @@ body {
 
 img#trackart {
   width: 120px;
+  height: 120px;
   float: left;
   left: 0;
   -webkit-border-top-left-radius: 10px;
@@ -67,6 +69,7 @@ img#trackart {
 
 .recent-track img#trackart{
   width: 80px;
+  height: 80px;
 }
 
 .trackInfo {
@@ -78,8 +81,8 @@ img#trackart {
   justify-content: center;
 }
 .trackInfo a {
-    position: relative;
-    width: auto;
+  position: relative;
+  width: auto;
   padding-left: 5%;
   padding-right: 5%;
   display: block;
@@ -102,6 +105,15 @@ margin: 0%;
   font-size: 1rem;
   text-align: left;
   letter-spacing: 0.1px;
+}
+
+#void{
+  z-index: 2;
+  position:absolute;
+  right: 0;
+  width: 100px;
+  height: 100%;
+  background: linear-gradient(90deg,rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 1) 75%);
 }
 
 #tracktitle {
@@ -145,6 +157,23 @@ margin: 0%;
     filter: blur(10px);
     transition: filter 0.3s ease;
   }
+
+  @media only screen and (max-width: 700px) {
+    #recentTracks, .nowplayingcontainer-inner{
+      width: 100%;
+    }
+    .nowplayingcard{
+      width: auto;
+      position: relative;
+      top: auto;
+      left: auto;
+      transform: none;
+      -webkit-transform: none;
+  text-align: center;
+  padding: 20px;
+    }
+  }
+
     </style>
 </head>
 <body>
@@ -195,37 +224,41 @@ margin: 0%;
             .attr("title", "Artist: " + currentTrack.artist["#text"]);
   
           const $mainImage = $("img#trackart");
+          const imageUrl = currentTrack.image[2]["#text"] || defaultImage;
           $mainImage.addClass("blurry");
-          $mainImage.attr("src", currentTrack.image[2]["#text"]);
-          $mainImage.on("load", function () {
-            $(this).removeClass("blurry");
-          });
+          $mainImage
+            .attr("src", imageUrl)
+            .off("error") // reset any previous error handlers
+            .on("error", function () {
+              $(this).attr("src", "https://i.imgur.com/Q6cCswP.jpg");
+            })
+            .on("load", function () {
+              $(this).removeClass("blurry");
+            });
   
           // --- Update Recently Played ---
-          let recentHTML = "";
-          let startIndex = isNowPlaying ? 1 : 0;
-  
-          let count = 0;
-          for (let i = startIndex; i < tracks.length && count < 3; i++) {
-            const t = tracks[i];
-            const title = t.name;
-            const artist = t.artist["#text"];
-            const url = t.url;
-            const image =
-              t.image[1]["#text"] || "https://i.imgur.com/Q6cCswP.jpg";
-            
-  
-            recentHTML += `
-              <div class="recent-track nowplayingcontainer-inner" >
-                <img id="trackart" src="${image}" alt="Album Art">
-                <div class="trackInfo">
-                <a id="tracktitle" href="${url}" target="_blank" title="${title}">${title}</a>
-                <a id="trackartist">${artist}</a>
-                </div>
-              </div>
-            `;
-            count++;
-          }
+          const recentOnly = isNowPlaying ? tracks.slice(1) : tracks;
+const limitedRecent = recentOnly.slice(0, 3);
+
+let recentHTML = "";
+limitedRecent.forEach(t => {
+  const title = t.name;
+  const artist = t.artist["#text"];
+  const url = t.url;
+  const image = t.image[1]["#text"] || "https://i.imgur.com/Q6cCswP.jpg";
+
+  recentHTML += `
+    <div class="recent-track nowplayingcontainer-inner">
+      <div id="void"></div>
+      <img id="trackart" src="${image}" alt="Album Art"
+        onerror="this.onerror=null;this.src='https://i.imgur.com/Q6cCswP.jpg';">
+      <div class="trackInfo">
+        <a id="tracktitle" href="${url}" target="_blank" title="${title}">${title}</a>
+        <a id="trackartist">${artist}</a>
+      </div>
+    </div>
+  `;
+});
   
           // Replace recent tracks DOM content
           $("#recentTracks").html(recentHTML);
@@ -242,6 +275,7 @@ margin: 0%;
   </script>
     <div class="nowplayingcard">
       <div class="nowplayingcontainer-inner">
+        <div id="void"></div>
         <img id="trackart" src="#">
         <div class="trackInfo">
           <p id="statusText">
